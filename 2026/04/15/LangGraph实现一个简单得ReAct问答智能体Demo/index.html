@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>LangGraph实现一个简单得ReAct问答智能体Demo | 我的个人博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="根据LangGraph的基本构建思路，结合官方文档，加入简单的搜索工具，完成了一个简单的智能回答demo。以下为重点实现步骤。 一、模型配置使用千问api，初始化大模型 123456llm &#x3D; ChatOpenAI(    api_key&#x3D;os.getenv(&quot;DASHSCOPE_API_KEY&quot;),     base_url&#x3D;&quot;https:&#x2F;&#x2F;dashscope.a">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangGraph实现一个简单得ReAct问答智能体Demo">
+<meta property="og:url" content="http://fyyy124.github.io/2026/04/15/LangGraph%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E5%BE%97ReAct%E9%97%AE%E7%AD%94%E6%99%BA%E8%83%BD%E4%BD%93Demo/index.html">
+<meta property="og:site_name" content="我的个人博客">
+<meta property="og:description" content="根据LangGraph的基本构建思路，结合官方文档，加入简单的搜索工具，完成了一个简单的智能回答demo。以下为重点实现步骤。 一、模型配置使用千问api，初始化大模型 123456llm &#x3D; ChatOpenAI(    api_key&#x3D;os.getenv(&quot;DASHSCOPE_API_KEY&quot;),     base_url&#x3D;&quot;https:&#x2F;&#x2F;dashscope.a">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-04-15T14:12:58.000Z">
+<meta property="article:modified_time" content="2026-04-15T14:25:36.851Z">
+<meta property="article:author" content="Yang">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="我的个人博客" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">我的个人博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://fyyy124.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-LangGraph实现一个简单得ReAct问答智能体Demo" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/04/15/LangGraph%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E5%BE%97ReAct%E9%97%AE%E7%AD%94%E6%99%BA%E8%83%BD%E4%BD%93Demo/" class="article-date">
+  <time class="dt-published" datetime="2026-04-15T14:12:58.000Z" itemprop="datePublished">2026-04-15</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      LangGraph实现一个简单得ReAct问答智能体Demo
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p><font style="color:rgb(0, 0, 0);background-color:rgba(255, 255, 255, 0.5);">根据LangGraph的基本构建思路，结合官方文档，加入简单的搜索工具，完成了一个简单的智能回答demo。以下为重点实现步骤。</font></p>
+<h4 id="一、模型配置"><a href="#一、模型配置" class="headerlink" title="一、模型配置"></a>一、模型配置</h4><p>使用千问api，初始化大模型</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">llm = ChatOpenAI(</span><br><span class="line">    api_key=os.getenv(&quot;DASHSCOPE_API_KEY&quot;), </span><br><span class="line">    base_url=&quot;https://dashscope.aliyuncs.com/compatible-mode/v1&quot;, </span><br><span class="line">    model=&quot;qwen-max&quot;,  </span><br><span class="line">    temperature=0.7 </span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="二、定义状态（State"><a href="#二、定义状态（State" class="headerlink" title="二、定义状态（State)"></a>二、定义状态（State)</h4><p> LangGraph 的核心是“状态流”。我们定义一个 <code>messages</code> 列表来存储对话历史。  </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">State</span>(<span class="title class_ inherited__">TypedDict</span>) :</span><br><span class="line">    <span class="comment"># 状态是一个字典，字典的键为messages,值是一个装有对话消息的列表（习惯叫消息列表）。</span></span><br><span class="line">    <span class="comment"># 使用了add_messages函数来追加新消息到列表中，而不是覆盖它。</span></span><br><span class="line">    messages: Annotated[<span class="built_in">list</span>, add_messages]</span><br></pre></td></tr></table></figure>
+
+<h4 id="三、工具集定义"><a href="#三、工具集定义" class="headerlink" title="三、工具集定义"></a>三、工具集定义</h4><p> 这里集成了 DuckDuckGo 联网搜索工具  。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">search_web = DuckDuckGoSearchRun(</span><br><span class="line">    name=<span class="string">&quot;duckduckgo_search&quot;</span>, </span><br><span class="line">    description=<span class="string">&quot;搜索互联网获取最新信息。适用于需要实时数据的场景。&quot;</span></span><br><span class="line">   )</span><br><span class="line">    </span><br><span class="line">tools = [search_web ]</span><br><span class="line"><span class="comment"># 将工具绑定到 LLM，使模型具备调用工具的能力</span></span><br><span class="line">llm_with_tools = llm.bind_tools(tools)</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="四、定义chatbot聊天节点"><a href="#四、定义chatbot聊天节点" class="headerlink" title="四、定义chatbot聊天节点"></a>四、定义chatbot聊天节点</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">chatbot</span>(<span class="params">state: State</span>) :</span><br><span class="line">    <span class="comment"># 必须使用 llm_with_tools，否则模型不知道自己有工具可用</span></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;messages&quot;</span>: [llm_with_tools.invoke(state[<span class="string">&quot;messages&quot;</span>])]&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="五、创建图，向图中添加节点和边"><a href="#五、创建图，向图中添加节点和边" class="headerlink" title="五、创建图，向图中添加节点和边"></a>五、创建图，向图中添加节点和边</h4><p> 这是实现 <strong>ReAct 循环</strong> 的核心：通过条件边判断是否需要进入工具节点。  </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">graph_builder = StateGraph(State)</span><br><span class="line"><span class="comment"># 添加推理节点和执行节点</span></span><br><span class="line">graph_builder.add_node(<span class="string">&quot;chatbot&quot;</span>, chatbot)</span><br><span class="line">graph_builder.add_node(<span class="string">&quot;tools&quot;</span>, ToolNode(tools=tools))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置逻辑连线</span></span><br><span class="line">graph_builder.add_edge(START, <span class="string">&quot;chatbot&quot;</span>)</span><br><span class="line"><span class="comment"># 条件路由：如果模型决定调用工具，则前往 tools 节点，否则结束</span></span><br><span class="line">graph_builder.add_conditional_edges(<span class="string">&quot;chatbot&quot;</span>, tools_condition)</span><br><span class="line"><span class="comment"># 执行完工具后，将结果返回给 chatbot 重新推理</span></span><br><span class="line">graph_builder.add_edge(<span class="string">&quot;tools&quot;</span>, <span class="string">&quot;chatbot&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="六、持久化记忆与运行"><a href="#六、持久化记忆与运行" class="headerlink" title="六、持久化记忆与运行"></a>六、持久化记忆与运行</h4><p> 引入 <code>MemorySaver</code>，通过 <code>thread_id</code> 标识不同的对话，实现跨轮次记忆。  </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 编译图并开启记忆功能</span></span><br><span class="line">memory = MemorySaver()</span><br><span class="line">graph = graph_builder.<span class="built_in">compile</span>(checkpointer=memory)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 只需要设定一个唯一的 thread_id，LangGraph 就会自动帮我们把对话存起来</span></span><br><span class="line">config = &#123;<span class="string">&quot;configurable&quot;</span>: &#123;<span class="string">&quot;thread_id&quot;</span>: <span class="string">&quot;my_first_chat&quot;</span>&#125;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        user_input = <span class="built_in">input</span>(<span class="string">&quot;\nUser: &quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> user_input.lower() <span class="keyword">in</span> [<span class="string">&quot;quit&quot;</span>, <span class="string">&quot;exit&quot;</span>, <span class="string">&quot;q&quot;</span>]:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Goodbye!&quot;</span>)</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">            </span><br><span class="line">        result = graph.invoke(</span><br><span class="line">            &#123;<span class="string">&quot;messages&quot;</span>: [&#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>, <span class="string">&quot;content&quot;</span>: user_input&#125;]&#125;,</span><br><span class="line">            config=config <span class="comment"># 传入配置以保持记忆</span></span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># result[&quot;messages&quot;] 里包含了所有历史消息，[-1] 就是 AI 的最新回复</span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;Assistant:&quot;</span>, result[<span class="string">&quot;messages&quot;</span>][-<span class="number">1</span>].content)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;发生错误: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">break</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="七、输出示例"><a href="#七、输出示例" class="headerlink" title="七、输出示例"></a>七、输出示例</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">User: 2026年是什么年  </span><br><span class="line">Assistant: 2026年是农历的丙午年，也就是马年。这一年从公历2026年2月17日（农历正月初一）开始，至2027年2月5日结束。根据中国的传统历法，这是六十年一遇的&quot;火马年&quot;或&quot;红马年&quot;。在传统文化中，马象征着奔腾、活力、进取与自由，因此丙午马年常被寄予一往无前、事业腾飞的美好寓意。对于生肖属马的人来说，2026年将是他们的本命年。</span><br><span class="line"></span><br><span class="line">User: 马的成语有什么  </span><br><span class="line">Assistant: 关于马的成语有很多，这里列举一些常见的：</span><br><span class="line"></span><br><span class="line">1. 一马当先 - 比喻在工作、学习等方面走在最前面。</span><br><span class="line">2. 马到成功 - 形容事情进展顺利，很快就取得了成功。</span><br><span class="line">3. 千军万马 - 形容兵马众多，声势浩大。</span><br><span class="line">4. 快马加鞭 - 比喻加快速度或加紧进行某项工作。</span><br><span class="line">5. 万马奔腾 - 形容气势磅礴，场面壮观。</span><br><span class="line">6. 老马识途 - 比喻有经验的人对事情比较熟悉。</span><br><span class="line">7. 走马观花 - 比喻粗略地观察事物。</span><br><span class="line">8. 马不停蹄 - 形容连续不断地工作或赶路。</span><br><span class="line">9. 龙马精神 - 形容人精力充沛，活力四射。</span><br><span class="line">10. 指鹿为马 - 比喻故意颠倒黑白，混淆是非。</span><br><span class="line"></span><br><span class="line">这些成语都以马为主题，各自表达了不同的含义和用法。如果你需要更多关于马的成语或者是特定成语的故事背景，请告诉我！</span><br><span class="line"></span><br><span class="line">User: q  </span><br><span class="line">Goodbye!</span><br></pre></td></tr></table></figure>
+
+<h4 id=""><a href="#" class="headerlink" title=""></a></h4>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://fyyy124.github.io/2026/04/15/LangGraph%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E5%BE%97ReAct%E9%97%AE%E7%AD%94%E6%99%BA%E8%83%BD%E4%BD%93Demo/" data-id="cuidS8Iwnocb7tg_MsUilYb2J" data-title="LangGraph实现一个简单得ReAct问答智能体Demo" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2026/04/15/LangGraph%E5%AD%A6%E4%B9%A0/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">LangGraph学习</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/04/">四月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/04/15/LangGraph%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E5%BE%97ReAct%E9%97%AE%E7%AD%94%E6%99%BA%E8%83%BD%E4%BD%93Demo/">LangGraph实现一个简单得ReAct问答智能体Demo</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/15/LangGraph%E5%AD%A6%E4%B9%A0/">LangGraph学习</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/13/langChain%E5%AD%A6%E4%B9%A0/">langChain学习</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/13/%E6%88%91%E7%9A%84%E7%AC%AC%E4%B8%80%E7%AF%87Hexo%E5%8D%9A%E5%AE%A2/">我的第一篇Hexo博客</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/13/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 Yang<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
