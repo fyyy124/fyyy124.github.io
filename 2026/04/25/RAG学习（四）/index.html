@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>RAG学习（四） | 我的个人博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="一、混合检索混合检索（Hybrid Search）是一种结合了 稀疏向量（Sparse Vectors） 和 密集向量（Dense Vectors） 优势的先进搜索技术。 倒数排序融合 (Reciprocal Rank Fusion, RRF)RRF 思想是：一个文档在不同检索系统中的排名越靠前，它的最终得分就越高。 加权线性组合这种方法需要先将不同检索系统的得分进行归一化（例如，统一到 0-1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RAG学习（四）">
+<meta property="og:url" content="http://fyyy124.github.io/2026/04/25/RAG%E5%AD%A6%E4%B9%A0%EF%BC%88%E5%9B%9B%EF%BC%89/index.html">
+<meta property="og:site_name" content="我的个人博客">
+<meta property="og:description" content="一、混合检索混合检索（Hybrid Search）是一种结合了 稀疏向量（Sparse Vectors） 和 密集向量（Dense Vectors） 优势的先进搜索技术。 倒数排序融合 (Reciprocal Rank Fusion, RRF)RRF 思想是：一个文档在不同检索系统中的排名越靠前，它的最终得分就越高。 加权线性组合这种方法需要先将不同检索系统的得分进行归一化（例如，统一到 0-1">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-04-25T12:38:23.000Z">
+<meta property="article:modified_time" content="2026-04-25T12:38:50.903Z">
+<meta property="article:author" content="Yang">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="我的个人博客" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">我的个人博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://fyyy124.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-RAG学习（四）" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/04/25/RAG%E5%AD%A6%E4%B9%A0%EF%BC%88%E5%9B%9B%EF%BC%89/" class="article-date">
+  <time class="dt-published" datetime="2026-04-25T12:38:23.000Z" itemprop="datePublished">2026-04-25</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      RAG学习（四）
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="一、混合检索"><a href="#一、混合检索" class="headerlink" title="一、混合检索"></a><font style="color:rgb(31, 31, 31);">一、混合检索</font></h2><p>混合检索（Hybrid Search）是一种结合了 稀疏向量（Sparse Vectors） 和 密集向量（Dense Vectors） 优势的先进搜索技术。</p>
+<h4 id="倒数排序融合-Reciprocal-Rank-Fusion-RRF"><a href="#倒数排序融合-Reciprocal-Rank-Fusion-RRF" class="headerlink" title="倒数排序融合 (Reciprocal Rank Fusion, RRF)"></a>倒数排序融合 (Reciprocal Rank Fusion, RRF)</h4><p>RRF 思想是：一个文档在不同检索系统中的排名越靠前，它的最终得分就越高。</p>
+<h4 id="加权线性组合"><a href="#加权线性组合" class="headerlink" title="加权线性组合"></a>加权线性组合</h4><p>这种方法需要先将不同检索系统的得分进行归一化（例如，统一到 0-1 区间），然后通过一个权重参数 <code>α</code> 来进行线性组合。</p>
+<h2 id="二、查询构建"><a href="#二、查询构建" class="headerlink" title="二、查询构建"></a>二、查询构建</h2><p>查询构建（Query Construction）利用大语言模型（LLM）的强大理解能力，将用户的自然语言查询“翻译”成针对特定数据源的结构化查询语言或带有过滤条件的请求。</p>
+<p>为文档块（Chunks）附加元数据（Metadata），自查询检索器（Self-Query Retriever） 是LangChain中实现这一功能的核心组件。它的工作流程如下：</p>
+<ol>
+<li>定义元数据结构：首先，需要向LLM清晰地描述文档内容和每个元数据字段的含义及类型。</li>
+<li>查询解析：当用户输入一个自然语言查询时，自查询检索器会调用LLM，将查询分解为两部分：<ul>
+<li>查询字符串（Query String）：用于进行语义搜索的部分。</li>
+<li>元数据过滤器（Metadata Filter）：从查询中提取出的结构化过滤条件。</li>
+</ul>
+</li>
+<li>执行查询：检索器将解析出的查询字符串和元数据过滤器发送给向量数据库，执行一次同时包含语义搜索和元数据过滤的查询。</li>
+</ol>
+<h3 id="Cypher"><a href="#Cypher" class="headerlink" title="Cypher"></a>Cypher</h3><p>Cypher 是图数据库（如 Neo4j）中最常用的查询语言，其地位类似于 SQL 之于关系数据库。它采用一种直观的方式来匹配图中的模式和关系，例如 <code>(:Person {name:&quot;Tomaz&quot;})-[:LIVES_IN]-&gt;(:Country {name:&quot;Slovenia&quot;})</code> 描述了一个人和一个国家以及他们之间的“居住在”关系。</p>
+<h3 id="“文本到Cypher”的原理"><a href="#“文本到Cypher”的原理" class="headerlink" title="“文本到Cypher”的原理"></a>“文本到Cypher”的原理</h3><p>“文本到Cypher”技术利用大语言模型（LLM）将用户的自然语言问题直接翻译成一句精准的 Cypher 查询语句。LangChain 提供了相应的工具链（如 <code>GraphCypherQAChain</code>），其工作流程通常是：</p>
+<ol>
+<li>接收用户的自然语言问题。</li>
+<li>LLM 根据预先提供的图谱模式（Schema），将问题转换为 Cypher 查询。</li>
+<li>在图数据库上执行该查询，获取精确的结构化数据。</li>
+<li>(可选)将查询结果再次交由 LLM，生成通顺的自然语言答案。</li>
+</ol>
+<h2 id="三、文本到SQL"><a href="#三、文本到SQL" class="headerlink" title="三、文本到SQL"></a>三、文本到SQL</h2><p>文本到SQL（Text-to-SQL）是为了打破人与结构化数据之间的语言障碍而生。它利用大语言模型（LLM）将用户的自然语言问题，直接翻译成可以在数据库上执行的SQL查询语句。</p>
+<h2 id="四、查询重构与分发"><a href="#四、查询重构与分发" class="headerlink" title="四、查询重构与分发"></a>四、查询重构与分发</h2><h2 id="查询翻译过程"><a href="#查询翻译过程" class="headerlink" title="查询翻译过程"></a>查询翻译过程</h2><h3 id="1-提示工程"><a href="#1-提示工程" class="headerlink" title="1. 提示工程"></a>1. 提示工程</h3><p>让 LLM 直接构建出查询指令。</p>
+<h3 id="2-多查询分解-Multi-query"><a href="#2-多查询分解-Multi-query" class="headerlink" title="2. 多查询分解 (Multi-query)"></a>2. 多查询分解 (Multi-query)</h3><h3 id="3-退步提示（Step-Back-Prompting）"><a href="#3-退步提示（Step-Back-Prompting）" class="headerlink" title="3. 退步提示（Step-Back Prompting）"></a>3. 退步提示（Step-Back Prompting）</h3><p>其核心流程分为两步：</p>
+<p>（1）抽象化：首先，引导 LLM 从用户的原始具体问题中，生成一个更高层次、更概括的“退步问题”（Step-back Question）。这个退步问题旨在探寻原始问题背后的通用原理或核心概念。</p>
+<p>（2）推理：接着，系统会先获取“退步问题”的答案（例如，一个物理定律、一段历史背景等），然后将这个通用原理作为上下文，再结合原始的具体问题，进行推理并生成最终答案。</p>
+<h3 id="4-假设性文档嵌入-HyDE"><a href="#4-假设性文档嵌入-HyDE" class="headerlink" title="4. 假设性文档嵌入 (HyDE)"></a>4. 假设性文档嵌入 (HyDE)</h3><p>HyDE 的工作流程可以分为三个步骤：</p>
+<p>（1）生成：当接收到用户查询时，首先调用一个生成式 LLM（例如，GPT-3.5）。提示该模型根据查询生成一个详细的、可能是理想答案的文档。这个文档不必完全符合事实，但它必须在语义上与一个好的答案高度相关。</p>
+<p>（2）编码：将上一步生成的假设性文档输入到一个对比编码器（如 Contriever）中，将其转换为一个高维向量嵌入。这个向量在语义上代表了一个“理想答案”的位置。</p>
+<p>（3）检索：使用这个假设性文档的向量，在向量数据库中执行相似性搜索，找出与这个“理想答案”最接近的真实文档。这些被检索出的文档将作为最终的上下文信息。</p>
+<h2 id="查询路由"><a href="#查询路由" class="headerlink" title="查询路由"></a>查询路由</h2><h3 id="基于LLM的意图识别"><a href="#基于LLM的意图识别" class="headerlink" title="基于LLM的意图识别"></a>基于LLM的意图识别</h3><p>通过设计一个包含路由选项的提示词，让大语言模型（LLM）直接对用户的查询进行分类，并输出一个代表路由选择的标签。</p>
+<p>实现流程：</p>
+<pre><code>1. 定义清晰的路由选项（例如，数据源名称、功能分类）。
+2. LLM 分析查询并输出决策标签。
+3. 代码根据标签调用相应的检索器或工具。
+</code></pre>
+<h3 id="嵌入相似性路由"><a href="#嵌入相似性路由" class="headerlink" title="嵌入相似性路由"></a>嵌入相似性路由</h3><p>通过计算用户查询与预设的“路由示例语句”之间的向量嵌入相似度来做出决策。</p>
+<h2 id="五、检索进阶"><a href="#五、检索进阶" class="headerlink" title="五、检索进阶"></a>五、检索进阶</h2><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>RRF</th>
+<th>RankLLM</th>
+<th>Cross-Encoder</th>
+<th>ColBERT</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>核心机制</td>
+<td>融合多个排名</td>
+<td>LLM 推理，生成排序列表</td>
+<td>联合编码查询与文档，计算单一相关分</td>
+<td>独立编码，后期交互</td>
+</tr>
+<tr>
+<td>计算成本</td>
+<td>低（简单数学计算）</td>
+<td>中 (API 费用与延迟)</td>
+<td>高（N次模型推理）</td>
+<td>中（向量点积计算）</td>
+</tr>
+<tr>
+<td>交互粒度</td>
+<td>无（仅排名）</td>
+<td>概念&#x2F;语义级</td>
+<td>句子级（Query-Doc Pair）</td>
+<td>Token 级</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>多路召回结果融合</td>
+<td>高价值语义理解场景</td>
+<td>Top-K 精排</td>
+<td>Top-K 重排</td>
+</tr>
+</tbody></table>
+<h3 id="压缩-Compression"><a href="#压缩-Compression" class="headerlink" title="压缩 (Compression)"></a>压缩 (Compression)</h3><p>压缩的目标就是对检索到的内容进行“压缩”和“提炼”，只保留与用户查询最直接相关的信息。这可以通过两种主要方式实现：</p>
+<ol>
+<li>内容提取：从文档中只抽出与查询相关的句子或段落。</li>
+<li>文档过滤：完全丢弃那些虽然被初步召回，但经过更精细判断后认为不相关的整个文档。</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://fyyy124.github.io/2026/04/25/RAG%E5%AD%A6%E4%B9%A0%EF%BC%88%E5%9B%9B%EF%BC%89/" data-id="cuidp5QMuRG0ww4AofdhjwIdj" data-title="RAG学习（四）" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2026/04/22/RAG%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%B8%89%EF%BC%89/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">RAG学习（三）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/04/">四月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/04/25/RAG%E5%AD%A6%E4%B9%A0%EF%BC%88%E5%9B%9B%EF%BC%89/">RAG学习（四）</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/22/RAG%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%B8%89%EF%BC%89/">RAG学习（三）</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/22/RAG%EF%BC%88%E4%BA%8C%EF%BC%89/">RAG学习（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/16/RAG%E5%AD%A6%E4%B9%A0%EF%BC%88%E4%B8%80%EF%BC%89/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2026/04/15/LangGraph%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E5%BE%97ReAct%E9%97%AE%E7%AD%94%E6%99%BA%E8%83%BD%E4%BD%93Demo/">LangGraph实现一个简单得ReAct问答智能体Demo</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 Yang<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
